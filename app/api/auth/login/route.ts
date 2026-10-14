@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
-import { createSessionToken, hashSessionToken, SESSION_COOKIE, SESSION_HOURS, verifyPassword } from "@/lib/auth";
+import { createSessionToken, hashSessionToken, SESSION_COOKIE, verifyPassword } from "@/lib/auth";
+import { sessionPolicy } from "@/lib/session-policy";
 import { prisma } from "@/lib/prisma";
 import { requestAuditContext } from "@/lib/login-audit";
 
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     return Response.json({ message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" }, { status: 401 });
   }
   const token = createSessionToken();
-  const expiresAt = new Date(Date.now() + SESSION_HOURS * 60 * 60 * 1000);
+  const { expiresAt, cookieExpiresAt } = sessionPolicy(request.headers.get("x-pos-client"));
   await prisma.$transaction([
     prisma.authSession.deleteMany({ where: { expiresAt: { lt: new Date() } } }),
     prisma.authSession.create({ data: { tokenHash: hashSessionToken(token), employeeId: employee.id, expiresAt } }),
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
   ]);
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true, sameSite: "lax", secure: process.env.AUTH_SECURE_COOKIE === "true", path: "/",
-    expires: expiresAt, priority: "high",
+    expires: cookieExpiresAt, priority: "high",
   });
   return Response.json({ user: { id: employee.id, username: employee.username, name: employee.name, position: employee.position.name, permissions: employee.position.permissions.map((item) => item.menuId), mustChangePassword: employee.mustChangePassword } });
 }

@@ -590,7 +590,7 @@ model AuthSession {
   tokenHash  String   @unique @db.Char(64)
   employeeId Int
   employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  expiresAt  DateTime
+  expiresAt  DateTime?
   createdAt  DateTime @default(now())
   lastSeenAt DateTime @default(now())
 

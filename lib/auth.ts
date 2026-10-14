@@ -5,7 +5,6 @@ import { promisify } from "node:util";
 import { prisma } from "@/lib/prisma";
 
 export const SESSION_COOKIE = "up_session";
-export const SESSION_HOURS = 12;
 
 const scrypt = promisify(scryptCallback);
 
@@ -83,7 +82,7 @@ export async function getSessionUser(request: Request): Promise<AuthUser | null>
       },
     },
   });
-  if (!session || session.expiresAt <= new Date() || !session.employee.active || !session.employee.position.active) {
+  if (!session || (session.expiresAt !== null && session.expiresAt <= new Date()) || !session.employee.active || !session.employee.position.active) {
     if (session) await prisma.authSession.delete({ where: { id: session.id } }).catch(() => undefined);
     return null;
   }
