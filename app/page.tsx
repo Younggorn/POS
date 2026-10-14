@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  ArrowDownRight, ArrowUpRight, BarChart3, Bell, Box, Boxes, Check, ChevronDown,
+  ArrowDownRight, ArrowUpRight, BarChart3, Box, Boxes, Check, ChevronDown,
   CalendarClock, CircleDollarSign, ClipboardList, Clock3, CreditCard, FileBarChart, HandCoins,
   KeyRound, LayoutDashboard, LogOut, Menu, Minus, PackageCheck, Plus, Printer, ReceiptText, ScanBarcode, ShieldCheck,
   Search, Settings, ShoppingBag, ShoppingCart, Store, Tag, Trash2, TrendingUp, Truck,
@@ -300,11 +300,6 @@ export default function Home() {
       <section className="workspace">
         <header className={`topbar ${effectivePage === "pos" ? "pos-topbar" : ""}`}>
           <div className="topbar-left"><button className="icon-btn menu-btn" onClick={() => setSidebar(!sidebar)}><Menu size={20} /></button><div><span className="eyebrow">UP MINIMART</span><h1>{pageName}</h1></div></div>
-          <div className="topbar-actions">
-            <LiveClock />
-            <button className="icon-btn notification"><Bell size={20} /><i /></button>
-            <div className="profile"><div className="avatar">{authUser.name.slice(0,2).toUpperCase()}</div><div><strong>{authUser.name}</strong><span>{authUser.position}</span></div></div>
-          </div>
         </header>
 
         <div className={`content ${effectivePage === "pos" ? "pos-content" : ""}`}>
@@ -333,19 +328,6 @@ export default function Home() {
       {completedDocument&&<ReceiptModal sale={completedDocument.sale} shop={completedDocument.shop} documentType={completedDocument.type} allowCancel={false} onClose={()=>setCompletedDocument(null)}/>}
     </main>
   );
-}
-
-function LiveClock() {
-  const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => {
-    const update = () => setNow(new Date());
-    update();
-    const timer = window.setInterval(update, 30_000);
-    return () => window.clearInterval(timer);
-  }, []);
-  const dateText = now ? new Intl.DateTimeFormat("th-TH", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Bangkok" }).format(now) : "--";
-  const timeText = now ? new Intl.DateTimeFormat("th-TH", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" }).format(now) : "--:--";
-  return <div className="today"><Clock3 size={16}/><span>{dateText}</span><strong>{timeText} น.</strong></div>;
 }
 
 type DashboardData = {
