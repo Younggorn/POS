@@ -1,0 +1,34 @@
+{
+  "name": "up-minimart-pos",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:import": "tsx scripts/import-legacy-data.ts",
+    "legacy:sync": "tsx scripts/sync-legacy-data.ts",
+    "legacy:export": "powershell -ExecutionPolicy Bypass -File scripts/export-legacy-data.ps1",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "csv-parse": "^7.0.2",
+    "lucide-react": "latest",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "prisma": "^6.19.3",
+    "tsx": "^4.23.11",
+    "typescript": "latest"
+  }
+}

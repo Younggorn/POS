@@ -1,0 +1,17 @@
+node_modules/
+.next/
+dev-server*.log
+*.tsbuildinfo
+.env*
+!.env.example
+/legacy-export/
+/legacy-sync/
+/backups/
+*.log
+*.mdb
+*.accdb
+*.bak
+*.dump
+*.pfx
+*.pem
+*.key

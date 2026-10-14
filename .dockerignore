@@ -1,0 +1,8 @@
+node_modules
+.next
+.git
+legacy-export
+legacy-sync
+dev-server*.log
+*.tsbuildinfo
+.env*

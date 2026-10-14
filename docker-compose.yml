@@ -1,0 +1,84 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: upminimart-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-upminimart}
+      POSTGRES_USER: ${POSTGRES_USER:-upminimart}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-upminimart_local_dev}
+      TZ: Asia/Bangkok
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: upminimart-web
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-upminimart}:${POSTGRES_PASSWORD:-upminimart_local_dev}@postgres:5432/${POSTGRES_DB:-upminimart}?schema=public
+      NODE_ENV: production
+      TZ: Asia/Bangkok
+      BACKUP_WORKER_URL: http://backup-worker:8080
+      BACKUP_WORKER_TOKEN: ${BACKUP_WORKER_TOKEN:-upminimart-internal-backup}
+      RECEIPT_PRINTER_AGENT_URL: http://host.docker.internal:18181
+      RECEIPT_PRINTER_TOKEN: ${RECEIPT_PRINTER_TOKEN}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      backup-worker:
+        condition: service_healthy
+    volumes:
+      - backup_data:/backups:ro
+      - ./legacy-sync:/legacy-sync
+      - ./legacy-export:/app/legacy-export:ro
+    command: ["sh", "-c", "pnpm prisma migrate deploy && pnpm start"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  backup-worker:
+    build:
+      context: ./backup-worker
+      dockerfile: Dockerfile
+    container_name: upminimart-backup-worker
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-upminimart}
+      POSTGRES_USER: ${POSTGRES_USER:-upminimart}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-upminimart_local_dev}
+      BACKUP_WORKER_TOKEN: ${BACKUP_WORKER_TOKEN:-upminimart-internal-backup}
+      BACKUP_RETENTION_DAYS: 30
+      LOGIN_LOG_RETENTION_DAYS: 180
+      TZ: Asia/Bangkok
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - backup_data:/backups
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/health',{headers:{authorization:'Bearer '+process.env.BACKUP_WORKER_TOKEN}}).then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  postgres_data:
+  backup_data:
